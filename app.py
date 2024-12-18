@@ -107,7 +107,7 @@ if uploaded_file:
 
                     if toggle_prompt:
                         # Alternate between "huhu" and "haha" based on the metric index
-                        if i % 2 == 0:
+                      if i % 2 == 0:
                             system_prompt = """You are a RELEVANCE grader; providing the relevance of the given question to the given answer.
                                             Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant. 
                                         
@@ -120,7 +120,7 @@ if uploaded_file:
                                             - Answer that is RELEVANT to the entire question should get a score of 9 or 10. Higher score indicates more RELEVANCE.
                                             - Answer must be relevant and helpful for answering the entire question to get a score of 10.
                                             - Never elaborate."""
-                        else:
+                      else:
                             system_prompt = """You are a FACTUAL ACCURACY grader; evaluating the factual correctness of the given answer based on the question and context.  
                                                 Respond only as a number from 0 to 10 where 0 indicates completely factually inaccurate and 10 indicates completely factually accurate.  
                                                 
