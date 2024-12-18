@@ -339,7 +339,7 @@ if uploaded_file:
 
                     if toggle_prompt:
                
-                            system_prompt = """You are a RELEVANCE grader; providing the relevance of the given question to the given answer.
+                      system_prompt = """You are a RELEVANCE grader; providing the relevance of the given question to the given answer.
                                             Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant. 
                                         
                                             A few additional scoring guidelines:
