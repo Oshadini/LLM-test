@@ -217,7 +217,7 @@ if uploaded_file:
                 st.write("Preview of Uploaded Data:")
                 st.dataframe(df.head())
                 
-                MAX_PROMPT_LENGTH = 1500  # Define maximum allowable characters for the system prompt
+                MAX_PROMPT_LENGTH = 2000  # Define maximum allowable characters for the system prompt
                 
                 def truncate_prompt(prompt: str, max_length: int = MAX_PROMPT_LENGTH) -> str:
                     """
