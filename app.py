@@ -104,7 +104,18 @@ if uploaded_file:
                     )
 
                     if toggle_prompt:
-                      system_prompt = "huhu"
+                      system_prompt = "You are a RELEVANCE grader; providing the relevance of the given question to the given answer.
+            Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant. 
+
+            A few additional scoring guidelines:
+            - Long answer should score equally well as short answer.
+            - RELEVANCE score should increase as the answer provides more RELEVANT context to the  question.
+            - RELEVANCE score should increase as the answer provides RELEVANT context to more parts of the  question.
+            - answer that is RELEVANT to some of the question should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
+            - answer that is RELEVANT to most of the question should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
+            - answer that is RELEVANT to the entire question should get a score of 9 or 10. Higher score indicates more RELEVANCE.
+            - answer must be relevant and helpful for answering the entire question to get a score of 10.
+            - Never elaborate."
                       st.text_area(
                         f"Generated System Prompt for Metric {i + 1}:", value=system_prompt, height=200
                         )
