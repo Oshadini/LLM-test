@@ -351,7 +351,7 @@ if uploaded_file:
                                             - Answer that is RELEVANT to the entire question should get a score of 9 or 10. Higher score indicates more RELEVANCE.
                                             - Answer must be relevant and helpful for answering the entire question to get a score of 10.
                                             - Never elaborate."""
-                      else:
+        
 
                       st.text_area(
                         f"Generated System Prompt for Metric {i + 1}:", value=system_prompt, height=200
