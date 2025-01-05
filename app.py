@@ -90,13 +90,14 @@ if uploaded_file:
 
                             try:
                                 response = openai.chat.completions.create(
-                                    model="gpt-4",
+                                    model="gpt-4o",
                                     messages=[
                                         {"role": "system", "content": system_prompt},
                                         {"role": "user", "content": f"Question: {row['Question']}\nContext: {row['Context']}\nAnswer: {row['Answer']}"}
                                     ]
                                 )
                                 response_content = response.choices[0].message.content.strip()
+                                st.write(response_content)
                                 # Parsing the GPT response for Criteria and Supporting Evidence
                                 criteria_match = re.search(r"Criteria:\s*(.*)", response_content)
                                 evidence_match = re.search(r"Supporting Evidence:\s*(.*)", response_content)
