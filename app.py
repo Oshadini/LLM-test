@@ -105,18 +105,24 @@ if uploaded_file:
                             try:
                                 # Call GPT-4 API
                                 completion = openai.chat.completions.create(
-                                    model="gpt-4o",
+                                    model="gpt-4",
                                     messages=[
                                         {"role": "system", "content": "You are an evaluator analyzing agent conversations."},
                                         {"role": "user", "content": llm_prompt}
                                     ]
                                 )
                                 response_content = completion.choices[0].message.content.strip()
-                                # Parse the response content into score, criteria, and supporting evidence
-                                response_lines = response_content.split("\n")
-                                score = response_lines[0].replace("Score:", "").strip()
-                                criteria = next((line.replace("Criteria:", "").strip() for line in response_lines if "Criteria:" in line), "")
-                                supporting_evidence = next((line.replace("Supporting Evidence:", "").strip() for line in response_lines if "Supporting Evidence:" in line), "")
+                                
+                                # Improved parsing logic for extracting score, criteria, and supporting evidence
+                                score, criteria, supporting_evidence = "", "", ""
+                                lines = response_content.split("\n")
+                                for line in lines:
+                                    if line.lower().startswith("score:"):
+                                        score = line.split(":", 1)[1].strip()
+                                    elif line.lower().startswith("criteria:"):
+                                        criteria = line.split(":", 1)[1].strip()
+                                    elif line.lower().startswith("supporting evidence:"):
+                                        supporting_evidence = line.split(":", 1)[1].strip()
 
                                 result_row = {
                                     "Index": row["Index"],
