@@ -90,18 +90,29 @@ if uploaded_file:
 
                             try:
                                 response = openai.chat.completions.create(
-                                    model="gpt-4o",
+                                    model="gpt-4",
                                     messages=[
                                         {"role": "system", "content": system_prompt},
                                         {"role": "user", "content": f"Question: {row['Question']}\nContext: {row['Context']}\nAnswer: {row['Answer']}"}
                                     ]
                                 )
-                                score = response.choices[0].message.content.strip()
+                                response_content = response.choices[0].message.content.strip()
+                                # Parsing the GPT response for Criteria and Supporting Evidence
+                                criteria_match = re.search(r"Criteria:\s*(.*)", response_content)
+                                evidence_match = re.search(r"Supporting Evidence:\s*(.*)", response_content)
+                                score_match = re.search(r"Score:\s*(.*)", response_content)
+
+                                criteria = criteria_match.group(1) if criteria_match else "Not available"
+                                evidence = evidence_match.group(1) if evidence_match else "Not available"
+                                score = score_match.group(1) if score_match else "Not available"
+
                                 result_row = {
                                     "Index": row["Index"],
                                     "Metric": f"Metric {i + 1}",
                                     "Selected Columns": ", ".join(selected_columns),
                                     "Score": score,
+                                    "Criteria": criteria,
+                                    "Supporting Evidence": evidence,
                                     "Question": row["Question"],
                                     "Context": row["Context"],
                                     "Answer": row["Answer"],
@@ -115,6 +126,8 @@ if uploaded_file:
                                     "Metric": f"Metric {i + 1}",
                                     "Selected Columns": ", ".join(selected_columns),
                                     "Score": "Error",
+                                    "Criteria": "Error",
+                                    "Supporting Evidence": "Error",
                                     "Question": row["Question"],
                                     "Context": row["Context"],
                                     "Answer": row["Answer"],
