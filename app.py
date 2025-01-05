@@ -112,13 +112,15 @@ if uploaded_file:
                                 response_content = response.choices[0].message.content.strip()
                                 st.write(response_content)
                                 # Parsing the GPT response for Criteria, Supporting Evidence, and Score
-                                criteria_match = re.search(r"Criteria:\s*(.*)", response_content)
-                                evidence_match = re.search(r"Supporting Evidence:\s*(.*)", response_content)
-                                score_match = re.search(r"Score:\s*(.*)", response_content)
+                                # Parsing the GPT response for Criteria, Supporting Evidence, and Score
+                                criteria_match = re.search(r"1\.\s*Criteria:\s*(.*?)(?=\n2\.)", response_content, re.S)
+                                evidence_match = re.search(r"2\.\s*Supporting Evidence:\s*(.*?)(?=\n3\.)", response_content, re.S)
+                                score_match = re.search(r"3\.\s*Score:\s*(.*)", response_content)
 
-                                criteria = criteria_match.group(1) if criteria_match else "Not available"
-                                evidence = evidence_match.group(1) if evidence_match else "Not available"
-                                score = score_match.group(1) if score_match else "Not available"
+                                criteria = criteria_match.group(1).strip() if criteria_match else "Not available"
+                                evidence = evidence_match.group(1).strip() if evidence_match else "Not available"
+                                score = score_match.group(1).strip() if score_match else "Not available"
+
 
                                 result_row = {
                                     "Index": row["Index"],
