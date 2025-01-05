@@ -166,5 +166,192 @@ if uploaded_file:
                     else:
                         st.warning("No results to combine. Please generate results for individual metrics first.")
 
+        #elif "Conversation" in df.columns and "Agent Prompt" in df.columns:
+        # Agentic Testing (Code 2 processing with updates for lengthy prompts)
+        elif "Conversation" in df.columns and "Agent Prompt" in df.columns:
+            # Code 2 processing
+            required_columns = ["Index", "Conversation", "Agent Prompt"]
+            if not all(col in df.columns for col in required_columns):
+                st.error(f"The uploaded file must contain these columns: {', '.join(required_columns)}.")
+            else:
+                st.write("Preview of Uploaded Data:")
+                st.dataframe(df.head())
+                
+                MAX_PROMPT_LENGTH = 2000  # Define maximum allowable characters for the system prompt
+                
+                def truncate_prompt(prompt: str, max_length: int = MAX_PROMPT_LENGTH) -> str:
+                    """
+                    Truncate the prompt to fit within the allowed maximum length.
+                    """
+                    if len(prompt) > max_length:
+                        return prompt[:max_length] + "..."
+                    return prompt
+                
+                # Define function to evaluate conversation using GPT-4
+                def evaluate_conversation(system_prompt: str, selected_columns: list, conversation: pd.DataFrame, metric_name: str) -> list:
+                    """
+                    Evaluate the conversation using GPT-4 based on the system prompt provided by the user.
+                    """
+                    results = []
+                    
+                    # Truncate the system prompt if it's too long
+                    if len(system_prompt) > MAX_PROMPT_LENGTH:
+                        st.warning(f"The system prompt exceeds {MAX_PROMPT_LENGTH} characters and will be truncated.")
+                        system_prompt = truncate_prompt(system_prompt)
+                    
+                    for index, row in conversation.iterrows():
+                        try:
+                            # Construct the evaluation prompt for GPT-4
+                            evaluation_prompt = f"""
+                            System Prompt: {system_prompt}
+                
+                            Index: {row['Index']}
+                            Conversation: {row['Conversation']}
+                            Agent Prompt: {row['Agent Prompt']}
+                
+                            Evaluate the entire conversation for Agent-Goal Accuracy. Use the following format:
+                            
+                            Criteria: [Explain how well the Agent responded to the User's input and fulfilled their goals]
+                            Supporting Evidence: [Highlight specific faulty or insufficient responses from the Agent]
+                            Score: [Provide a numerical or qualitative score here]
+                            """
+                
+                            # Call GPT-4 API
+                            completion = openai.chat.completions.create(
+                                model="gpt-4",
+                                messages=[
+                                    {"role": "system", "content": "You are an evaluator analyzing agent conversations."},
+                                    {"role": "user", "content": evaluation_prompt}
+                                ]
+                            )
+                
+                            response_content = completion.choices[0].message.content.strip()
+                
+                            # Parse GPT-4 response into structured format
+                            parsed_response = {
+                                "Index": row["Index"],
+                                "Metric": metric_name,
+                                "Selected Columns": ", ".join(selected_columns),
+                                "Score": "",
+                                "Criteria": "",
+                                "Supporting Evidence": "",
+                                "Agent Prompt": row.get("Agent Prompt", ""),
+                                "Conversation": row.get("Conversation", "")
+                            }
+                
+                            # Extract values for Criteria, Supporting Evidence, and Score
+                            for line in response_content.split("\n"):
+                                line = line.strip()
+                                if line.startswith("Criteria:"):
+                                    parsed_response["Criteria"] = line.replace("Criteria:", "").strip()
+                                elif line.startswith("Supporting Evidence:"):
+                                    parsed_response["Supporting Evidence"] = line.replace("Supporting Evidence:", "").strip()
+                                elif line.startswith("Score:"):
+                                    parsed_response["Score"] = line.replace("Score:", "").strip()
+                
+                            # Validate extracted structure
+                            if not (parsed_response["Criteria"] and parsed_response["Supporting Evidence"] and parsed_response["Score"]):
+                                raise ValueError("Response does not contain the required structured fields.")
+                
+                            results.append(parsed_response)
+                
+                        except Exception as e:
+                            results.append({
+                                "Index": row["Index"],
+                                "Metric": metric_name,
+                                "Selected Columns": ", ".join(selected_columns),
+                                "Score": "N/A",
+                                "Criteria": "Error",
+                                "Supporting Evidence": f"Error processing conversation: {e}",
+                                "Agent Prompt": row.get("Agent Prompt", ""),
+                                "Conversation": row.get("Conversation", "")
+                            })
+                
+                    return results
+
+                num_metrics = st.number_input("Enter the number of metrics you want to define:", min_value=1, step=1)
+        
+                if "system_prompts" not in st.session_state:
+                    st.session_state.system_prompts = {}
+                if "combined_results" not in st.session_state:
+                    st.session_state.combined_results = []
+
+                for i in range(num_metrics):
+                    st.markdown(f"""
+                        <hr style="border: 5px solid #000000;">
+                        <h3 style="background-color: #f0f0f0; padding: 10px; border: 2px solid #000000;">
+                            Metric {i + 1}
+                        </h3>
+                    """, unsafe_allow_html=True)
+
+                    # Column selection remains unchanged
+                    selected_columns = st.multiselect(
+                        f"Select columns for Metric {i + 1}:",
+                        options=required_columns[1:],  # Skip the Index column
+                        key=f"columns_{i}"
+                    )
+
+                    toggle_prompt = st.checkbox(
+                        f"Automatically generate system prompt for Metric {i + 1}", key=f"toggle_prompt_{i}"
+                    )
+
+
+
+                    if toggle_prompt:
+               
+                      system_prompt = """Role: You are responsible for evaluating the AGENT-GOAL ACCURACY of a conversation based on its alignment with the AGENT PROMPT.  
+
+                                        Scoring Scale (0-10):  
+                                        0 indicates the responses are entirely unrelated to the AGENT PROMPT.  
+                                        1 to 4 reflects limited alignment, lacking depth, precision, or relevance. Scores of 1 to 2 represent negligible coverage with minimal helpfulness, while 3 to 4 indicate partial coverage with insufficient detail or completeness.  
+                                        5 to 8 represents reasonable alignment with clear and relevant responses. Scores of 5 to 6 cover most of the prompt but have significant gaps, while 7 to 8 reflect strong alignment with minor omissions or gaps.  
+                                        9 to 10 signifies comprehensive alignment with precise, complete, and entirely relevant responses. A score of 9 is near-perfect with minimal imperfections, and a score of 10 is fully sufficient and flawlessly aligned.  
+                                        
+                                        Criteria for evaluation include how well the agent responses address user inputs and the AGENT PROMPT, the accuracy, relevance, and helpfulness of the responses, and the completeness and precision in meeting the context of the AGENT PROMPT.  
+                                        
+                                        Supporting evidence should highlight areas of strong alignment and fulfillment of goals while identifying specific faults, such as misunderstanding, inaccuracy, or incompleteness, that detract from the relevance or helpfulness of the responses.  
+                                        
+                                        Output must be a single numerical score between 0 and 10 with no additional text.
+                                        """
+        
+
+                      st.text_area(
+                        f"Generated System Prompt for Metric {i + 1}:", value=system_prompt, height=200
+                        )
+                      st.success(f"System Prompt for Metric {i + 1} is hardcoded as 'huhu'.")
+
+                    else:
+                        system_prompt = st.text_area(
+                            f"Enter the System Prompt for Metric {i + 1}:",
+                            height=200
+                        )
+                    
+
+                    # Generate results for each metric
+                    if st.button(f"Metric {i + 1} Results", key=f"generate_results_{i}"):
+                        if system_prompt.strip() == "":
+                            st.error("Please enter a valid system prompt.")
+                        else:
+                            st.write("Evaluating conversations. Please wait...")
+
+                            results = evaluate_conversation(system_prompt, selected_columns, df, f"Metric {i + 1}")
+                            st.session_state.combined_results.extend(results)
+                            st.write(f"Results for Metric {i + 1}:")
+                            st.dataframe(pd.DataFrame(results))
+
+                # Combine results for all metrics
+                # Check if there are combined results before displaying them
+                if num_metrics > 1 and st.button("Overall Results"):
+                    try:
+                        if st.session_state.combined_results:
+                            st.write("Combined Results:")
+                            st.dataframe(pd.DataFrame(st.session_state.combined_results))
+                        else:
+                            st.warning("No results to combine. Please generate results for individual metrics first.")
+                    except Exception as e:
+                        st.error(f"Error displaying combined results: {e}")
+
+
+    
     except Exception as e:
         st.error(f"Error processing the uploaded file: {e}")
