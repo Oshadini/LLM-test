@@ -89,8 +89,8 @@ if uploaded_file:
                                     params[column_mapping[col]] = row[col]
 
                             try:
-                                response = openai.ChatCompletion.create(
-                                    model="gpt-4",
+                                response = openai.chat.completions.create(
+                                    model="gpt-4o",
                                     messages=[
                                         {"role": "system", "content": system_prompt},
                                         {"role": "user", "content": f"Question: {row['Question']}\nContext: {row['Context']}\nAnswer: {row['Answer']}"}
