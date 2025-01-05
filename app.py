@@ -100,7 +100,7 @@ if uploaded_file:
                             for col in selected_columns:
                                 if col in column_mapping:
                                     llm_prompt += f"{column_mapping[col]}: {row[col]}\n"
-                            llm_prompt += "Score: "
+                            llm_prompt += "Score: Provide a score along with criteria and supporting evidence."
 
                             try:
                                 # Call GPT-4 API
@@ -112,11 +112,19 @@ if uploaded_file:
                                     ]
                                 )
                                 response_content = completion.choices[0].message.content.strip()
+                                # Parse the response content into score, criteria, and supporting evidence
+                                response_lines = response_content.split("\n")
+                                score = response_lines[0].replace("Score:", "").strip()
+                                criteria = next((line.replace("Criteria:", "").strip() for line in response_lines if "Criteria:" in line), "")
+                                supporting_evidence = next((line.replace("Supporting Evidence:", "").strip() for line in response_lines if "Supporting Evidence:" in line), "")
+
                                 result_row = {
                                     "Index": row["Index"],
                                     "Metric": f"Metric {i + 1}",
                                     "Selected Columns": ", ".join(selected_columns),
-                                    "Score": response_content,
+                                    "Score": score,
+                                    "Criteria": criteria,
+                                    "Supporting Evidence": supporting_evidence,
                                     "Question": row["Question"],
                                     "Context": row["Context"],
                                     "Answer": row["Answer"],
@@ -129,6 +137,8 @@ if uploaded_file:
                                     "Index": row["Index"],
                                     "Metric": f"Metric {i + 1}",
                                     "Score": "Error",
+                                    "Criteria": "N/A",
+                                    "Supporting Evidence": "N/A",
                                     "Error Message": str(e)
                                 })
                         st.session_state.combined_results.extend(results)
