@@ -7,7 +7,7 @@ import openai
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # Streamlit UI
-st.title("LLM Evaluation Toolll")
+st.title("LLM Evaluation Tool")
 st.write("Upload an Excel file for processing. The expected formats are:")
 st.write("1. Columns: Index, Question, Context, Answer, Reference Context, Reference Answer")
 st.write("2. Columns: Index, Conversation, Agent Prompt")
@@ -33,8 +33,6 @@ if uploaded_file:
 
                 num_metrics = st.number_input("Enter the number of metrics you want to define:", min_value=1, step=1)
 
-                if "system_prompts" not in st.session_state:
-                    st.session_state.system_prompts = {}
                 if "combined_results" not in st.session_state:
                     st.session_state.combined_results = []
 
@@ -57,28 +55,18 @@ if uploaded_file:
                     )
 
                     if toggle_prompt:
-                        # Alternate between relevance and factual accuracy prompts
                         if i % 2 == 0:
                             system_prompt = """You are a RELEVANCE grader; providing the relevance of the given question to the given answer.
-                                Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant. 
-                                
-                                Scoring guidelines:
-                                - Score increases as the answer is relevant to more parts of the question.
-                                - An answer relevant to the entire question should score 9 or 10.
-                                - Never elaborate."""
+                            Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant."""
                         else:
-                            system_prompt = """You are a FACTUAL ACCURACY grader; evaluating the factual correctness of the given answer.
-                                Respond only as a number from 0 to 10 where 0 indicates completely factually inaccurate and 10 indicates completely factually accurate.
-                                
-                                Scoring guidelines:
-                                - Scores increase as the answer contains more factually correct information.
-                                - Completely accurate answers should score 9 or 10.
-                                - Never elaborate."""
-                        
+                            system_prompt = """You are a FACTUAL ACCURACY grader; evaluating the factual correctness of the given answer based on the question and context.
+                            Respond only as a number from 0 to 10 where 0 indicates completely factually inaccurate and 10 indicates completely factually accurate."""
+
                         st.text_area(
-                            f"Generated System Prompt for Metric {i + 1}:", value=system_prompt, height=200
+                            f"Generated System Prompt for Metric {i + 1}:",
+                            value=system_prompt,
+                            height=200
                         )
-                        st.success(f"System Prompt for Metric {i + 1} is hardcoded.")
                     else:
                         system_prompt = st.text_area(
                             f"Enter the System Prompt for Metric {i + 1}:",
@@ -95,42 +83,25 @@ if uploaded_file:
                         }
                         results = []
                         for index, row in df.iterrows():
-                            # Construct prompt with selected columns
-                            llm_prompt = f"System Prompt: {system_prompt}\n\n"
+                            params = {"system_prompt": system_prompt}
                             for col in selected_columns:
                                 if col in column_mapping:
-                                    llm_prompt += f"{column_mapping[col]}: {row[col]}\n"
-                            llm_prompt += "Score: Provide a score along with criteria and supporting evidence."
+                                    params[column_mapping[col]] = row[col]
 
                             try:
-                                # Call GPT-4 API
-                                completion = openai.chat.completions.create(
-                                    model="gpt-4o",
+                                response = openai.ChatCompletion.create(
+                                    model="gpt-4",
                                     messages=[
-                                        {"role": "system", "content": "You are an evaluator analyzing RAG answers."},
-                                        {"role": "user", "content": llm_prompt}
+                                        {"role": "system", "content": system_prompt},
+                                        {"role": "user", "content": f"Question: {row['Question']}\nContext: {row['Context']}\nAnswer: {row['Answer']}"}
                                     ]
                                 )
-                                response_content = completion.choices[0].message.content.strip()
-                                st.write(response_content)
-                                # Improved parsing logic for extracting score, criteria, and supporting evidence
-                                score, criteria, supporting_evidence = "", "", ""
-                                lines = response_content.split("\n")
-                                for line in lines:
-                                    if line.lower().startswith("score:"):
-                                        score = line.split(":", 1)[1].strip()
-                                    elif line.lower().startswith("criteria:"):
-                                        criteria = line.split(":", 1)[1].strip()
-                                    elif line.lower().startswith("supporting evidence:"):
-                                        supporting_evidence = line.split(":", 1)[1].strip()
-
+                                score = response.choices[0].message.content.strip()
                                 result_row = {
                                     "Index": row["Index"],
                                     "Metric": f"Metric {i + 1}",
                                     "Selected Columns": ", ".join(selected_columns),
                                     "Score": score,
-                                    "Criteria": criteria,
-                                    "Supporting Evidence": supporting_evidence,
                                     "Question": row["Question"],
                                     "Context": row["Context"],
                                     "Answer": row["Answer"],
@@ -142,11 +113,16 @@ if uploaded_file:
                                 results.append({
                                     "Index": row["Index"],
                                     "Metric": f"Metric {i + 1}",
+                                    "Selected Columns": ", ".join(selected_columns),
                                     "Score": "Error",
-                                    "Criteria": "N/A",
-                                    "Supporting Evidence": "N/A",
-                                    "Error Message": str(e)
+                                    "Question": row["Question"],
+                                    "Context": row["Context"],
+                                    "Answer": row["Answer"],
+                                    "Reference Context": row["Reference Context"],
+                                    "Reference Answer": row["Reference Answer"],
+                                    "Error": str(e)
                                 })
+
                         st.session_state.combined_results.extend(results)
                         st.write(f"Results for Metric {i + 1}:")
                         st.dataframe(pd.DataFrame(results))
@@ -158,9 +134,5 @@ if uploaded_file:
                     else:
                         st.warning("No results to combine. Please generate results for individual metrics first.")
 
-        elif "Conversation" in df.columns and "Agent Prompt" in df.columns:
-            # Code 2 remains unchanged for Agentic Testing
-            pass
-
     except Exception as e:
-        st.error(f"Error processing the file: {e}")
+        st.error(f"Error processing the uploaded file: {e}")
