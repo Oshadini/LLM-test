@@ -104,7 +104,7 @@ if uploaded_file:
 
                             try:
                                 # Call GPT API
-                                completion = openai.Completion.create(
+                                completion = openai.chat.completions.create(
                                     engine="text-davinci-003",
                                     prompt=llm_prompt,
                                     max_tokens=50
