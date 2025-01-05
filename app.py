@@ -89,16 +89,28 @@ if uploaded_file:
                                     params[column_mapping[col]] = row[col]
 
                             try:
+                                # Constructing the evaluation prompt with system prompt and column values
+                                evaluation_prompt = f"""
+                                {system_prompt}
+
+                                Below is the data for evaluation:
+                                {''.join([f'{col}: {row[col]}\n' for col in selected_columns])}
+
+                                Based on the provided data, evaluate the following:
+                                1. **Criteria**: Explain how the evaluation is derived.
+                                2. **Supporting Evidence**: Provide specific examples from the data.
+                                3. **Score**: Provide a numerical or qualitative score.
+                                """
+
                                 response = openai.chat.completions.create(
-                                    model="gpt-4o",
+                                    model="gpt-4",
                                     messages=[
-                                        {"role": "system", "content": system_prompt},
-                                        {"role": "user", "content": f"Question: {row['Question']}\nContext: {row['Context']}\nAnswer: {row['Answer']}"}
+                                        {"role": "system", "content": "You are an evaluator analyzing the provided data."},
+                                        {"role": "user", "content": evaluation_prompt}
                                     ]
                                 )
                                 response_content = response.choices[0].message.content.strip()
-                                st.write(response_content)
-                                # Parsing the GPT response for Criteria and Supporting Evidence
+                                # Parsing the GPT response for Criteria, Supporting Evidence, and Score
                                 criteria_match = re.search(r"Criteria:\s*(.*)", response_content)
                                 evidence_match = re.search(r"Supporting Evidence:\s*(.*)", response_content)
                                 score_match = re.search(r"Score:\s*(.*)", response_content)
