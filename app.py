@@ -103,18 +103,20 @@ if uploaded_file:
                             llm_prompt += "Score: "
 
                             try:
-                                # Call GPT API
+                                # Call GPT-4 API
                                 completion = openai.chat.completions.create(
-                                    engine="text-davinci-003",
-                                    prompt=llm_prompt,
-                                    max_tokens=50
+                                    model="gpt-4",
+                                    messages=[
+                                        {"role": "system", "content": "You are an evaluator analyzing agent conversations."},
+                                        {"role": "user", "content": llm_prompt}
+                                    ]
                                 )
-                                score = completion.choices[0].text.strip()
+                                response_content = completion.choices[0].message.content.strip()
                                 result_row = {
                                     "Index": row["Index"],
                                     "Metric": f"Metric {i + 1}",
                                     "Selected Columns": ", ".join(selected_columns),
-                                    "Score": score,
+                                    "Score": response_content,
                                     "Question": row["Question"],
                                     "Context": row["Context"],
                                     "Answer": row["Answer"],
