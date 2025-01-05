@@ -105,14 +105,14 @@ if uploaded_file:
                             try:
                                 # Call GPT-4 API
                                 completion = openai.chat.completions.create(
-                                    model="gpt-4",
+                                    model="gpt-4o",
                                     messages=[
-                                        {"role": "system", "content": "You are an evaluator analyzing agent conversations."},
+                                        {"role": "system", "content": "You are an evaluator analyzing RAG answers."},
                                         {"role": "user", "content": llm_prompt}
                                     ]
                                 )
                                 response_content = completion.choices[0].message.content.strip()
-                                
+                                st.write(response_content)
                                 # Improved parsing logic for extracting score, criteria, and supporting evidence
                                 score, criteria, supporting_evidence = "", "", ""
                                 lines = response_content.split("\n")
