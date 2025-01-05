@@ -90,16 +90,19 @@ if uploaded_file:
 
                             try:
                                 # Constructing the evaluation prompt with system prompt and column values
+                                                                # Constructing the evaluation prompt with system prompt and column values
                                 evaluation_prompt = f"""
                                 {system_prompt}
 
                                 Below is the data for evaluation:
                                 {''.join([f'{col}: {row[col]}\n' for col in selected_columns])}
 
-                                Based on the provided data, evaluate the following:
-                                1. **Criteria**: Explain how the evaluation is derived.
-                                2. **Supporting Evidence**: Provide specific examples from the data.
-                                3. **Score**: Provide a numerical or qualitative score.
+                                Based on the provided data, evaluate the following in this exact format:
+                                1. Criteria: [Provide a detailed explanation of how the evaluation is derived.]
+                                2. Supporting Evidence: [Provide specific examples from the data supporting the evaluation.]
+                                3. Score: [Provide a numerical or qualitative score.]
+
+                                Ensure the response strictly follows this format with numbered headings.
                                 """
 
                                 response = openai.chat.completions.create(
@@ -110,8 +113,7 @@ if uploaded_file:
                                     ]
                                 )
                                 response_content = response.choices[0].message.content.strip()
-                                st.write(response_content)
-                                # Parsing the GPT response for Criteria, Supporting Evidence, and Score
+
                                 # Parsing the GPT response for Criteria, Supporting Evidence, and Score
                                 criteria_match = re.search(r"1\.\s*Criteria:\s*(.*?)(?=\n2\.)", response_content, re.S)
                                 evidence_match = re.search(r"2\.\s*Supporting Evidence:\s*(.*?)(?=\n3\.)", response_content, re.S)
@@ -120,6 +122,7 @@ if uploaded_file:
                                 criteria = criteria_match.group(1).strip() if criteria_match else "Not available"
                                 evidence = evidence_match.group(1).strip() if evidence_match else "Not available"
                                 score = score_match.group(1).strip() if score_match else "Not available"
+
 
 
                                 result_row = {
