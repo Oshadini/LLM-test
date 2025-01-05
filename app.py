@@ -105,7 +105,7 @@ if uploaded_file:
                             try:
                                 # Call GPT-4 API
                                 completion = openai.chat.completions.create(
-                                    model="gpt-4",
+                                    model="gpt-4o",
                                     messages=[
                                         {"role": "system", "content": "You are an evaluator analyzing agent conversations."},
                                         {"role": "user", "content": llm_prompt}
