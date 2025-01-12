@@ -132,6 +132,7 @@ if uploaded_file:
                                     ]
                                 )
                                 response_content = response.choices[0].message.content.strip()
+                                st.write(response_content)
 
                                 # Parsing the GPT response for Criteria, Supporting Evidence, and Score
                                 criteria_match = re.search(r"1\.\s*Criteria:\s*(.*?)(?=\n2\.)", response_content, re.S)
