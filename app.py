@@ -125,7 +125,7 @@ if uploaded_file:
                                 """
 
                                 response = openai.chat.completions.create(
-                                    model="gpt-4",
+                                    model="gpt-4o",
                                     messages=[
                                         {"role": "system", "content": "You are an evaluator analyzing the provided data."},
                                         {"role": "user", "content": evaluation_prompt}
@@ -338,7 +338,7 @@ if uploaded_file:
                       st.text_area(
                         f"Generated System Prompt for Metric {i + 1}:", value=system_prompt, height=200
                         )
-                      st.success(f"System Prompt for Metric {i + 1} is generated")
+                      st.success(f"System Prompt for Metric {i + 1} is hardcoded as 'huhu'.")
 
                     else:
                         system_prompt = st.text_area(
