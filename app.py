@@ -286,7 +286,15 @@ if uploaded_file:
                             """
                 
                             # Call GPT-4 API
-                            response_content = get_llm_response(evaluation_prompt)
+                            response = openai.chat.completions.create(
+                                model="gpt-4o",
+                                messages=[
+                                    {"role": "system", "content": "You are an evaluator analyzing a conversation..."},
+                                    {"role": "user", "content": evaluation_prompt}
+                                ]
+                            )
+                            response_content = response.choices[0].message.content.strip()
+
 
                 
                             # Parse GPT-4 response into structured format
