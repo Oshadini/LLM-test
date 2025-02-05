@@ -125,7 +125,7 @@ if uploaded_file:
                                 """
 
                                 response = openai.chat.completions.create(
-                                    model="gpt-4o",
+                                    model="gpt-4",
                                     messages=[
                                         {"role": "system", "content": "You are an evaluator analyzing the provided data."},
                                         {"role": "user", "content": evaluation_prompt}
