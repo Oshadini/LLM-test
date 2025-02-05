@@ -6,40 +6,6 @@ import openai
 # Set OpenAI API key
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-MAX_RETRIES = 3  # Set the max number of retries
-
-def get_llm_response(evaluation_prompt):
-    """
-    Function to call OpenAI API with a retry mechanism in case of refusals.
-    """
-    for attempt in range(MAX_RETRIES):
-        try:
-            response = openai.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are an evaluator analyzing the provided data. Always provide a complete and accurate evaluation."},
-                    {"role": "user", "content": evaluation_prompt}
-                ]
-            )
-            response_content = response.choices[0].message.content.strip()
-            
-            # Handle refusal cases
-            if "I'm sorry" in response_content or "unable to assist" in response_content:
-                if attempt < MAX_RETRIES - 1:
-                    print(f"Retrying due to refusal... Attempt {attempt + 2}/{MAX_RETRIES}")
-                    continue  # Retry with the same prompt
-                else:
-                    return "Error: Model refused to generate a response after multiple attempts."
-            
-            return response_content  # Successful response
-
-        except Exception as e:
-            if attempt == MAX_RETRIES - 1:
-                return f"Error: {str(e)}"  # Return error only after max retries
-
-    return "Error: Unable to generate a response after multiple attempts."
-
-
 # Streamlit UI
 st.title("LLM Evaluation Tool")
 st.write("Upload an Excel file for processing. The expected formats are:")
@@ -158,29 +124,14 @@ if uploaded_file:
                                 Ensure the response strictly follows this format with numbered headings.
                                 """
 
-                             
-
-                                
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                
-
-                                response_content = get_llm_response(evaluation_prompt)
-
+                                response = openai.chat.completions.create(
+                                    model="gpt-4o",
+                                    messages=[
+                                        {"role": "system", "content": "You are an evaluator analyzing the provided data."},
+                                        {"role": "user", "content": evaluation_prompt}
+                                    ]
+                                )
+                                response_content = response.choices[0].message.content.strip()
                                 st.write(response_content)
 
                                 # Parsing the GPT response for Criteria, Supporting Evidence, and Score
@@ -286,16 +237,15 @@ if uploaded_file:
                             """
                 
                             # Call GPT-4 API
-                            response = openai.chat.completions.create(
-                                model="gpt-4o",
+                            completion = openai.chat.completions.create(
+                                model="gpt-4",
                                 messages=[
-                                    {"role": "system", "content": "You are an evaluator analyzing a conversation..."},
+                                    {"role": "system", "content": "You are an evaluator analyzing agent conversations."},
                                     {"role": "user", "content": evaluation_prompt}
                                 ]
                             )
-                            response_content = response.choices[0].message.content.strip()
-
-
+                
+                            response_content = completion.choices[0].message.content.strip()
                 
                             # Parse GPT-4 response into structured format
                             parsed_response = {
