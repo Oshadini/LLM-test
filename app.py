@@ -132,7 +132,7 @@ if uploaded_file:
                                     ]
                                 )
                                 response_content = response.choices[0].message.content.strip()
-                                st.write(response_content)
+                                #st.write(response_content)
 
                                 # Parsing the GPT response for Criteria, Supporting Evidence, and Score
                                 criteria_match = re.search(r"1\.\s*Criteria:\s*(.*?)(?=\n2\.)", response_content, re.S)
@@ -338,7 +338,7 @@ if uploaded_file:
                       st.text_area(
                         f"Generated System Prompt for Metric {i + 1}:", value=system_prompt, height=200
                         )
-                      st.success(f"System Prompt for Metric {i + 1} is hardcoded as 'huhu'.")
+                      st.success(f"System Prompt for Metric {i + 1} is generated")
 
                     else:
                         system_prompt = st.text_area(
